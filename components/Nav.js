@@ -10,10 +10,10 @@ const LINKS = [
   { href: '/dashboard/departments', label: 'Departments & budgets', roles: ['admin', 'it_staff'] },
   { href: '/dashboard/hardware', label: 'Hardware', roles: ['admin', 'it_staff'] },
   { href: '/dashboard/offboarding', label: 'Offboarding', roles: ['admin', 'it_staff'] },
+  { href: '/dashboard/software', label: 'Software & spend', roles: ['admin', 'it_staff'] },
   { href: '/dashboard/audit', label: 'Audit log', roles: ['admin'] },
   { href: '/dashboard/users', label: 'Users', roles: ['admin'] },
   { href: '/dashboard/my', label: 'My assets', roles: ['admin', 'it_staff', 'employee'] },
-  // Person B adds: Subscriptions, Seats, Renewals, Waste, Invoices
 ];
 
 export default function Nav() {
