@@ -1,0 +1,33 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f5f6f8; color: #1d2330; }
+.shell { display: flex; min-height: 100vh; }
+.nav { width: 210px; background: #1d2330; color: #fff; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.nav h2 { margin: 0 0 12px; font-size: 18px; }
+.nav a, .nav button { color: #cfd6e4; text-decoration: none; padding: 8px 10px; border-radius: 6px; background: none; border: 0; text-align: left; font: inherit; cursor: pointer; }
+.nav a:hover, .nav button:hover { background: #2d3548; color: #fff; }
+.nav .who { margin-top: auto; font-size: 12px; color: #8b95ab; }
+main { flex: 1; padding: 24px; max-width: 1100px; }
+h1 { margin-top: 0; }
+.card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat b { display: block; font-size: 28px; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e6e9ef; font-size: 14px; vertical-align: top; }
+th { background: #eef0f5; }
+input, select, button.btn { font: inherit; padding: 7px 9px; border: 1px solid #c4cad6; border-radius: 6px; background: #fff; }
+button.btn { background: #2f5bea; color: #fff; border-color: #2f5bea; cursor: pointer; }
+button.btn.danger { background: #c62828; border-color: #c62828; }
+button.btn.ghost { background: #fff; color: #2f5bea; }
+button.btn:disabled { opacity: .5; cursor: not-allowed; }
+form.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.msg { padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
+.msg.ok { background: #e3f6e8; color: #1b6b2f; }
+.msg.err { background: #fde7e7; color: #a32020; }
+.badge { padding: 2px 8px; border-radius: 10px; font-size: 12px; background: #e6e9ef; }
+.badge.available, .badge.active { background: #e3f6e8; color: #1b6b2f; }
+.badge.assigned { background: #e5edff; color: #1e44b8; }
+.badge.repair { background: #fff2d6; color: #8a5a00; }
+.badge.retired, .badge.offboarded { background: #eee; color: #666; }
+pre { margin: 0; font-size: 12px; white-space: pre-wrap; }
+.login { max-width: 340px; margin: 12vh auto; }
+.login form { display: flex; flex-direction: column; gap: 10px; }
