@@ -14,6 +14,7 @@ const LINKS = [
   { href: '/dashboard/audit', label: 'Audit log', roles: ['admin'] },
   { href: '/dashboard/users', label: 'Users', roles: ['admin'] },
   { href: '/dashboard/my', label: 'My assets', roles: ['admin', 'it_staff', 'employee'] },
+  { href: '/dashboard/my/software', label: 'My software', roles: ['admin', 'it_staff', 'employee'] },
 ];
 
 export default function Nav() {
