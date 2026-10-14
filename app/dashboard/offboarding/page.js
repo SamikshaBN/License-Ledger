@@ -42,9 +42,6 @@ export default function OffboardingPage() {
           <b>Software seats to be freed ({p.seats.length})</b>
           <ul>{p.seats.map((s) => <li key={s.seat_id}>{s.subscription}</li>)}</ul>
           <label><input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} /> I confirm this employee has left the company</label>
-          {me?.role === 'admin' && (
-            <div><label><input type="checkbox" checked={simulate} onChange={(e) => setSimulate(e.target.checked)} /> Demo: simulate a failure to show the rollback</label></div>
-          )}
           <p><button className="btn danger" disabled={!confirmed} onClick={offboard}>Offboard now</button></p>
         </div>
       )}
