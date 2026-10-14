@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
+import { useMe } from '@/lib/client';
 
 async function api(url, opts) {
   const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
@@ -34,6 +35,8 @@ const Table = ({ cols, rows, empty = 'No data' }) => (
 );
 
 export default function SoftwarePage() {
+  const me = useMe();
+  const isAdmin = me?.role === 'admin'; // IT staff can view and assign seats; spend changes are admin-only
   const [tab, setTab] = useState('subs');
   const [msg, setMsg] = useState(null);
   const notify = useCallback((text, error = false) => { setMsg({ text, error }); setTimeout(() => setMsg(null), 5000); }, []);
@@ -45,15 +48,15 @@ export default function SoftwarePage() {
         {[['subs', 'Subscriptions'], ['waste', 'Waste report'], ['renew', 'Renewals'], ['inv', 'Invoices']].map(([k, l]) =>
           <button key={k} style={S.tab(tab === k)} onClick={() => setTab(k)}>{l}</button>)}
       </div>
-      {tab === 'subs' && <Subscriptions notify={notify} />}
+      {tab === 'subs' && <Subscriptions notify={notify} isAdmin={isAdmin} />}
       {tab === 'waste' && <Waste />}
-      {tab === 'renew' && <Renewals notify={notify} />}
-      {tab === 'inv' && <Invoices notify={notify} />}
+      {tab === 'renew' && <Renewals notify={notify} isAdmin={isAdmin} />}
+      {tab === 'inv' && <Invoices notify={notify} isAdmin={isAdmin} />}
     </div>
   );
 }
 
-function Subscriptions({ notify }) {
+function Subscriptions({ notify, isAdmin }) {
   const [q, setQ] = useState('');
   const [rows, setRows] = useState([]);
   const [lookup, setLookup] = useState({ employees: [], vendors: [], departments: [] });
@@ -102,6 +105,7 @@ function Subscriptions({ notify }) {
           ]} />
         </div>
       )}
+      {isAdmin && (<>
       <div style={S.card}>
         <h3>Add vendor</h3>
         <div style={S.row}>
@@ -123,6 +127,7 @@ function Subscriptions({ notify }) {
           <button style={S.btn} onClick={() => act(async () => { await api('/api/software/subscriptions', { method: 'POST', body: JSON.stringify(sub) }); setSub(blank); }, 'Subscription added')}>Add</button>
         </div>
       </div>
+      </>)}
     </>
   );
 }
@@ -154,7 +159,7 @@ function Waste() {
   );
 }
 
-function Renewals({ notify }) {
+function Renewals({ notify, isAdmin }) {
   const [days, setDays] = useState(30);
   const [d, setD] = useState({ upcoming: [], history: [] });
   const load = useCallback(() => api(`/api/software/renewals?days=${days}`).then(setD).catch((e) => notify(e.message, true)), [days, notify]);
@@ -176,7 +181,8 @@ function Renewals({ notify }) {
         { h: 'Product', r: (r) => r.product_name }, { h: 'Vendor', r: (r) => r.vendor_name },
         { h: 'Renews', r: (r) => fmt(r.renewal_date) }, { h: 'In', r: (r) => <span style={r.days_until <= 7 ? S.warn : undefined}>{r.days_until} days</span> },
         { h: 'Cycle cost', r: (r) => money(r.cost_per_cycle) }, { h: 'Unused seats', r: (r) => r.seats_unused },
-        { h: '', r: (r) => <button style={S.btn} onClick={() => renew(r)}>Record renewal</button> }]} />
+        ...(isAdmin ? [{ h: '', r: (r) => <button style={S.btn} onClick={() => renew(r)}>Record renewal</button> }] : []),
+      ]} />
       <h3>Recent renewals</h3>
       <Table rows={d.history} cols={[
         { h: 'Product', r: (r) => r.product_name }, { h: 'Renewed on', r: (r) => fmt(r.renewal_date) },
@@ -185,11 +191,28 @@ function Renewals({ notify }) {
   );
 }
 
-function Invoices({ notify }) {
+function Invoices({ notify, isAdmin }) {
   const [rows, setRows] = useState([]);
+  const [list, setList] = useState([]);
   const [subs, setSubs] = useState([]);
   const [f, setF] = useState({ subscription_id: '', invoice_date: '', total: '', invoice_number: '', raw_payload: null });
-  const load = useCallback(() => api('/api/software/invoices/analytics').then(setRows).catch((e) => notify(e.message, true)), [notify]);
+  const load = useCallback(() => Promise.all([
+    api('/api/software/invoices/analytics').then(setRows),
+    api('/api/software/invoices').then(setList),
+  ]).catch((e) => notify(e.message, true)), [notify]);
+  const edit = async (inv) => {
+    const total = window.prompt('New total', String(inv.total));
+    if (total === null) return;
+    const invoice_date = window.prompt('Invoice date (YYYY-MM-DD)', fmt(inv.invoice_date));
+    if (invoice_date === null) return;
+    try { await api(`/api/software/invoices/${inv._id}`, { method: 'PATCH', body: JSON.stringify({ total, invoice_date }) }); notify('Invoice updated'); load(); }
+    catch (e) { notify(e.message, true); }
+  };
+  const remove = async (inv) => {
+    if (!window.confirm(`Delete invoice ${inv.invoice_number || inv._id}?`)) return;
+    try { await api(`/api/software/invoices/${inv._id}`, { method: 'DELETE' }); notify('Invoice deleted'); load(); }
+    catch (e) { notify(e.message, true); }
+  };
   useEffect(() => { load(); api('/api/software/subscriptions').then(setSubs).catch(() => {}); }, [load]);
   const max = Math.max(1, ...rows.map((r) => r.total));
   const readFile = (file) => { if (!file) return; const rd = new FileReader(); rd.onload = () => { try { setF((p) => ({ ...p, raw_payload: JSON.parse(rd.result) })); } catch { notify('File is not valid JSON', true); } }; rd.readAsText(file); };
@@ -199,6 +222,7 @@ function Invoices({ notify }) {
   };
   return (
     <>
+      {isAdmin && (
       <div style={S.card}>
         <h3>Upload invoice</h3>
         <div style={S.row}>
@@ -213,11 +237,19 @@ function Invoices({ notify }) {
         </div>
         <small>The optional JSON file is stored untouched as raw_payload, so each vendor can use its own format.</small>
       </div>
+      )}
       <h3>Monthly spend per vendor</h3>
       <Table rows={rows} empty="No invoices yet" cols={[
         { h: 'Vendor', r: (r) => r.vendor_name }, { h: 'Month', r: (r) => r.month },
         { h: 'Total', r: (r) => <><div style={{ display: 'inline-block', height: 10, width: `${(r.total / max) * 160}px`, background: r.anomaly ? '#dc2626' : '#2563eb', marginRight: 8 }} />{money(r.total)}</> },
         { h: 'Vendor avg', r: (r) => money(r.avg) }, { h: '', r: (r) => r.anomaly && <span style={S.warn}>Anomaly</span> }]} />
+      <h3>Invoices</h3>
+      <Table rows={list} empty="No invoices yet" cols={[
+        { h: 'Invoice #', r: (r) => r.invoice_number }, { h: 'Vendor', r: (r) => r.vendor_name },
+        { h: 'Date', r: (r) => fmt(r.invoice_date) }, { h: 'Total', r: (r) => money(r.total) },
+        { h: 'Updated', r: (r) => fmt(r.updated_at) },
+        ...(isAdmin ? [{ h: '', r: (r) => <><button style={S.btn} onClick={() => edit(r)}>Edit</button>{' '}<button style={{ ...S.btn, background: '#dc2626' }} onClick={() => remove(r)}>Delete</button></> }] : []),
+      ]} />
     </>
   );
 }

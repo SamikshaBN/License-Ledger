@@ -1,5 +1,6 @@
 'use client';
 import { useLoad } from '@/lib/client';
+import SoftwareOverview from './software/SoftwareOverview';
 
 export default function Overview() {
   const { data, error } = useLoad('/api/people/summary');
@@ -24,6 +25,7 @@ export default function Overview() {
           ))}
         </tbody>
       </table>
+      <SoftwareOverview />
     </>
   );
 }
