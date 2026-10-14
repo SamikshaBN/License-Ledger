@@ -1,5 +1,6 @@
 'use client';
 import { useLoad } from '@/lib/client';
+import { money } from '@/lib/money';
 import SoftwareOverview from './software/SoftwareOverview';
 
 export default function Overview() {

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { money } from '@/lib/money';
 
 const money = (n) => Number(n ?? 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 const fmt = (d) => (d ? String(d).slice(0, 10) : '');

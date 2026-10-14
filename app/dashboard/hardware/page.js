@@ -34,7 +34,7 @@ export default function HardwarePage() {
           <input placeholder="Make / model" value={form.make_model} onChange={(e) => setForm({ ...form, make_model: e.target.value })} />
           <input placeholder="Serial number" value={form.serial_number} onChange={(e) => setForm({ ...form, serial_number: e.target.value })} />
           <input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} />
-          <input type="number" placeholder="Cost" value={form.purchase_cost} onChange={(e) => setForm({ ...form, purchase_cost: e.target.value })} style={{ width: 100 }} />
+          <input type="number" placeholder="Cost (₹)" value={form.purchase_cost} onChange={(e) => setForm({ ...form, purchase_cost: e.target.value })} style={{ width: 100 }} />
           <button className="btn">Add asset</button>
         </form>
       </div>

@@ -25,7 +25,7 @@ export async function POST(req) {
       `SELECT s.vendor_id, v.name AS vendor_name FROM software_subscription s
          JOIN vendor v ON v.vendor_id = s.vendor_id WHERE s.subscription_id = $1`, [sid]);
     if (!sub.rows.length) throw httpError(404, 'Subscription not found');
-    const currency = (str(b.currency ?? 'USD', 'currency', { max: 3 }) ?? 'USD').toUpperCase();
+    const currency = (str(b.currency ?? 'INR', 'currency', { max: 3 }) ?? 'INR').toUpperCase();
     if (currency.length !== 3) throw httpError(400, 'currency must be a 3-letter code');
     const doc = {
       subscription_id: sid, vendor_id: sub.rows[0].vendor_id, vendor_name: sub.rows[0].vendor_name,

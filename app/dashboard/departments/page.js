@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api, errText, useLoad, useMe } from '@/lib/client';
+import { money } from '@/lib/money';
 
 export default function DepartmentsPage() {
   const me = useMe();

@@ -13,7 +13,8 @@
     "db:software": "node --env-file=.env scripts/apply-software-sql.js",
     "seed:software": "node --env-file=.env scripts/seed-software.js",
     "test:concurrency": "node --env-file=.env scripts/test-concurrency.js",
-    "explain:search": "node --env-file=.env scripts/explain-search.js"
+    "explain:search": "node --env-file=.env scripts/explain-search.js",
+    "convert:inr":"node --env-file=.env scripts/convert-to-inr.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

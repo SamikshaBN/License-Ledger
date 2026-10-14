@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useMe } from '@/lib/client';
+import { money } from '@/lib/money';
 
 async function api(url, opts) {
   const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
@@ -8,7 +9,6 @@ async function api(url, opts) {
   if (!res.ok) throw new Error(data.error || res.statusText);
   return data;
 }
-const money = (n) => Number(n ?? 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 const fmt = (d) => (d ? String(d).slice(0, 10) : '');
 const S = {
   wrap: { maxWidth: 1100, margin: '0 auto', fontFamily: 'inherit' },
