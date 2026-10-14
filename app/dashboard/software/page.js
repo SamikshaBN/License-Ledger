@@ -10,17 +10,19 @@ async function api(url, opts) {
 const money = (n) => Number(n ?? 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 const fmt = (d) => (d ? String(d).slice(0, 10) : '');
 const S = {
-  wrap: { maxWidth: 1100, margin: '0 auto', padding: 24, fontFamily: 'system-ui, sans-serif' },
-  tabs: { display: 'flex', gap: 8, margin: '16px 0' },
-  tab: (on) => ({ padding: '8px 14px', borderRadius: 6, border: '1px solid #8884', cursor: 'pointer', background: on ? '#2563eb' : 'transparent', color: on ? '#fff' : 'inherit' }),
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: 14 },
-  cell: { padding: '6px 8px', borderBottom: '1px solid #8883', textAlign: 'left' },
-  card: { border: '1px solid #8883', borderRadius: 8, padding: 14, margin: '12px 0' },
-  row: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '8px 0' },
-  input: { padding: 6, borderRadius: 4, border: '1px solid #8886', background: 'transparent', color: 'inherit' },
-  btn: { padding: '6px 12px', borderRadius: 6, border: 0, background: '#2563eb', color: '#fff', cursor: 'pointer' },
-  warn: { color: '#dc2626', fontWeight: 600 },
+  wrap: { maxWidth: 1100, margin: '0 auto', fontFamily: 'inherit' },
+  tabs: { display: 'flex', gap: 4, margin: '0 0 20px', padding: 4, background: '#ebe7dc', borderRadius: 6, width: 'fit-content' },
+  tab: (on) => ({ padding: '8px 16px', borderRadius: 4, border: 0, cursor: 'pointer', font: 'inherit', fontWeight: 600, background: on ? '#fff' : 'transparent', color: on ? '#25231f' : '#77726a', boxShadow: on ? '0 1px 2px rgba(34,37,31,.15)' : 'none' }),
+  table: { width: '100%' },
+  cell: { padding: '10px 14px', textAlign: 'left' },
+  card: { background: '#fffefb', border: '1px solid #e3dfd5', borderRadius: 6, padding: 16, margin: '12px 0' },
+  row: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', margin: '8px 0' },
+  input: { padding: '8px 11px', borderRadius: 4, border: '1px solid #d2cdc0', background: '#fff', color: 'inherit', font: 'inherit' },
+  btn: { padding: '8px 14px', borderRadius: 4, border: 0, background: '#2f6b4f', color: '#fff', cursor: 'pointer', font: 'inherit', fontWeight: 600 },
+  warn: { color: '#b4432f', fontWeight: 600 },
 };
+
+
 const Table = ({ cols, rows, empty = 'No data' }) => (
   <table style={S.table}>
     <thead><tr>{cols.map((c) => <th key={c.h} style={S.cell}>{c.h}</th>)}</tr></thead>

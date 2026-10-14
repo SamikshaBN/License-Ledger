@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { api, useMe } from '@/lib/client';
 
 // Role-based UI hiding: each link lists the roles that may see it.
@@ -20,16 +20,28 @@ const LINKS = [
 export default function Nav() {
   const me = useMe();
   const router = useRouter();
+  const pathname = usePathname();
+
   async function logout() {
     await api('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   }
+
+  const visible = me ? LINKS.filter((l) => l.roles.includes(me.role)) : [];
+  // the longest matching link wins, so /dashboard/my/software does not also light up /dashboard/my
+  const current = visible
+    .filter((l) => pathname === l.href || (l.href !== '/dashboard' && pathname.startsWith(l.href + '/')))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
   return (
     <nav className="nav">
-      <h2>LicenseLedger</h2>
-      {me && LINKS.filter((l) => l.roles.includes(me.role)).map((l) => <Link key={l.href} href={l.href}>{l.label}</Link>)}
+      <div className="brand">LicenseLedger</div>
+      {visible.map((l) => (
+        <Link key={l.href} href={l.href} className={l.href === current ? 'active' : ''}>{l.label}</Link>
+      ))}
+      <div className="spacer" />
       <button onClick={logout}>Log out</button>
-      {me && <div className="who">{me.username} ({me.role})</div>}
+      {me && <div className="who">{me.username} · {me.role}</div>}
     </nav>
   );
 }

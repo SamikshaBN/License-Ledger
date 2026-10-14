@@ -13,21 +13,24 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-            const { user } = await api('/api/auth/login', { method: 'POST', body: form });
-            router.push(user.role === 'employee' ? '/dashboard/my' : '/dashboard');
+      const { user } = await api('/api/auth/login', { method: 'POST', body: form });
+      router.push(user.role === 'employee' ? '/dashboard/my' : '/dashboard');
     } catch (err) {
       setError(errText(err));
     } finally { setBusy(false); }
   }
   return (
-    <div className="login card">
-      <h1>LicenseLedger</h1>
-      <form onSubmit={submit}>
-        <input placeholder="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} autoFocus />
-        <input placeholder="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-        <button className="btn" disabled={busy}>{busy ? 'Signing in...' : 'Sign in'}</button>
-      </form>
-      {error && <div className="msg err">{error}</div>}
+    <div className="login-wrap">
+      <div className="login card">
+        <h1>LicenseLedger</h1>
+        <p className="muted">Sign in to continue</p>
+        <form onSubmit={submit}>
+          <input placeholder="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} autoFocus />
+          <input placeholder="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <button className="btn" disabled={busy}>{busy ? 'Signing in...' : 'Sign in'}</button>
+        </form>
+        {error && <div className="msg err">{error}</div>}
+      </div>
     </div>
   );
 }
