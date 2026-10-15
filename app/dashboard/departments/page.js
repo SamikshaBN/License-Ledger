@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api, errText, useLoad, useMe } from '@/lib/client';
-import { money } from '@/lib/money';
+import { inr } from '@/lib/money';
 
 export default function DepartmentsPage() {
   const me = useMe();
@@ -40,9 +40,9 @@ export default function DepartmentsPage() {
             return (
               <tr key={b.department_id}>
                 <td>{b.department}</td>
-                <td>{editing ? <input type="number" value={edit.hardware_budget} onChange={(e) => setEdit({ ...edit, hardware_budget: e.target.value })} /> : (b.hardware_budget ?? 'not set')}</td>
-                <td>{editing ? <input type="number" value={edit.software_budget} onChange={(e) => setEdit({ ...edit, software_budget: e.target.value })} /> : (b.software_budget ?? 'not set')}</td>
-                <td>{Number(b.hardware_value).toLocaleString()}</td>
+                <td>{editing ? <input type="number" value={edit.hardware_budget} onChange={(e) => setEdit({ ...edit, hardware_budget: e.target.value })} /> : (b.hardware_budget == null ? 'not set' : inr(b.hardware_budget))}</td>
+                <td>{editing ? <input type="number" value={edit.software_budget} onChange={(e) => setEdit({ ...edit, software_budget: e.target.value })} /> : (b.software_budget == null ? 'not set' : inr(b.software_budget))}</td>
+                <td>{inr(b.hardware_value)}</td>
                 {isAdmin && (
                   <td>
                     {editing ? (

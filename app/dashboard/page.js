@@ -1,7 +1,7 @@
 'use client';
 import { useLoad } from '@/lib/client';
-import { money } from '@/lib/money';
 import SoftwareOverview from './software/SoftwareOverview';
+import { inr } from '@/lib/money';
 
 export default function Overview() {
   const { data, error } = useLoad('/api/people/summary');
@@ -22,7 +22,7 @@ export default function Overview() {
         <thead><tr><th>Department</th><th>Assets in use</th><th>Hardware value</th></tr></thead>
         <tbody>
           {data.departments.map((d) => (
-            <tr key={d.department_id}><td>{d.department}</td><td>{d.assets_in_use}</td><td>{Number(d.hardware_value).toLocaleString()}</td></tr>
+            <tr key={d.department_id}><td>{d.department}</td><td>{d.assets_in_use}</td><td>{inr(d.hardware_value)}</td></tr>
           ))}
         </tbody>
       </table>
