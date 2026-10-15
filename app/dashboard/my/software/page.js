@@ -1,8 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { money } from '@/lib/money';
+import { inr as money } from '@/lib/money';
 
-const money = (n) => Number(n ?? 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 const fmt = (d) => (d ? String(d).slice(0, 10) : '');
 const cell = { padding: '6px 8px', borderBottom: '1px solid #8883', textAlign: 'left' };
 

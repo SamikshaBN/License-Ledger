@@ -21,11 +21,11 @@ for (const [n, w, e] of vendors)
 
 // vendor, product, plan, cost/seat, cycle, seats, renewal in N days
 const subs = [
-  ['Slack', 'Slack Business+', 'Business+', 12.5, 'monthly', 10, 12],
-  ['Figma', 'Figma Professional', 'Professional', 15, 'monthly', 6, 25],
-  ['Atlassian', 'Jira Software', 'Standard', 8.15, 'monthly', 8, 60],
-  ['Zoom', 'Zoom Workplace', 'Business', 18, 'monthly', 5, 5],
-  ['Notion', 'Notion Team', 'Team', 10, 'monthly', 4, 90],
+  ['Slack', 'Slack Business+', 'Business+', 1050, 'monthly', 10, 12],
+  ['Figma', 'Figma Professional', 'Professional', 1250, 'monthly', 6, 25],
+  ['Atlassian', 'Jira Software', 'Standard', 680, 'monthly', 8, 60],
+  ['Zoom', 'Zoom Workplace', 'Business', 1500, 'monthly', 5, 5],
+  ['Notion', 'Notion Team', 'Team', 830, 'monthly', 4, 90],
 ];
 const created = [];
 for (const [i, [vname, product, plan, cost, cycle, seats, days]] of subs.entries()) {
@@ -58,7 +58,7 @@ for (const [idx, s] of created.entries()) {
     total = Math.round(total * 100) / 100;
     const base = { subscription_id: s.subscription_id, vendor_id: s.vendor_id, vendor_name: s.vendor_name,
       invoice_number: `${s.vendor_name.slice(0, 3).toUpperCase()}-${d.getUTCFullYear()}${d.getUTCMonth() + 1}`,
-      invoice_date: d, currency: 'USD', total, source: 'seed', created_at: new Date() };
+      invoice_date: d, currency: 'INR', total, source: 'seed', created_at: new Date() };
     // different vendors send differently shaped payloads
     base.line_items = idx % 2 === 0
       ? [{ description: `${s.vendor_name} seats`, qty: s.seats, unit_price: s.cost, amount: total }]

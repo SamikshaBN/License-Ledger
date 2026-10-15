@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useLoad } from '@/lib/client';
+import { inr as money } from '@/lib/money';
 
-const money = (n) => Number(n ?? 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 const fmt = (d) => (d ? String(d).slice(0, 10) : '');
 
 // Shown on the main Overview page (admin and IT staff only; the API enforces the same roles).
