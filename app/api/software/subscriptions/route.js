@@ -1,5 +1,5 @@
 import { query } from '@/lib/software/pg';
-import { ok, fail, num, str, date, tsQuery, httpError } from '@/lib/software/http';
+import { ok, fail, num, str, date, tsQuery, httpError, optInt } from '@/lib/software/http';
 import { requireRole } from '@/lib/software/guard';
 
 // GET /api/software/subscriptions?q=slack   (full-text search over product, plan and vendor name)
@@ -15,7 +15,7 @@ export async function GET(req) {
         WHERE $1::text IS NULL
            OR s.search_vector @@ to_tsquery('simple', $1)
            OR v.search_vector @@ to_tsquery('simple', $1)
-        ORDER BY u.renewal_date`, [q]);
+        ORDER BY (u.status = 'cancelled'), u.renewal_date`, [q]);
     return ok(r.rows);
   } catch (e) { return fail(e); }
 }
@@ -30,7 +30,7 @@ export async function POST(req) {
       `INSERT INTO software_subscription
          (vendor_id, department_id, name, plan, cost_per_seat, billing_cycle, seat_limit, renewal_date, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active') RETURNING *`,
-      [num(b.vendor_id, 'vendor_id', { int: true, min: 1 }), num(b.department_id, 'department_id', { int: true, min: 1 }),
+      [num(b.vendor_id, 'vendor_id', { int: true, min: 1 }), optInt(b.department_id, 'department_id'),
        str(b.product_name, 'product_name'), str(b.plan, 'plan', { required: false }),
        num(b.cost_per_seat, 'cost_per_seat', { min: 0 }), cycle, num(b.seats_total, 'seats_total', { int: true, min: 1 }),
        date(b.renewal_date, 'renewal_date')]);

@@ -64,8 +64,11 @@ function Subscriptions({ notify, isAdmin }) {
   const [vendor, setVendor] = useState({ name: '', website: '', contact_email: '' });
   const blank = { vendor_id: '', department_id: '', product_name: '', plan: '', cost_per_seat: '', billing_cycle: 'monthly', seats_total: '', renewal_date: '' };
   const [sub, setSub] = useState(blank);
+  const [edit, setEdit] = useState(null);
+  const setE = (k) => (e) => setEdit({ ...edit, [k]: e.target.value });
+  const patch = (id, body) => api(`/api/software/subscriptions/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
 
-  const load = useCallback(() => api(`/api/software/subscriptions?q=${encodeURIComponent(q)}`).then(setRows).catch((e) => notify(e.message, true)), [q, notify]);
+  const load = useCallback(() => api(`/api/software/subscriptions?q=${encodeURIComponent(q)}`).then((r) => { setRows(r); setSel((cur) => (cur ? r.find((x) => x.subscription_id === cur.subscription_id) ?? cur : cur)); }).catch((e) => notify(e.message, true)), [q, notify]);
   const loadLookup = () => api('/api/software/lookup').then(setLookup).catch((e) => notify(e.message, true));
   const loadSeats = (id) => api(`/api/software/subscriptions/${id}`).then((d) => setSeats(d.seats)).catch((e) => notify(e.message, true));
   useEffect(() => { load(); }, [load]);
@@ -82,21 +85,49 @@ function Subscriptions({ notify, isAdmin }) {
       </div>
       <Table rows={rows} cols={[
         { h: 'Product', r: (r) => <a href="#" onClick={(e) => { e.preventDefault(); choose(r); }}>{r.product_name}</a> },
-        { h: 'Vendor', r: (r) => r.vendor_name }, { h: 'Department', r: (r) => r.department_name },
+        { h: 'Vendor', r: (r) => r.vendor_name }, { h: 'Department', r: (r) => r.department_name ?? 'Unassigned' },
         { h: 'Seats', r: (r) => `${r.seats_used}/${r.seats_total}` },
         { h: 'Cost/seat', r: (r) => `${money(r.cost_per_seat)} ${r.billing_cycle}` },
-        { h: 'Renews', r: (r) => fmt(r.renewal_date) }, { h: 'Status', r: (r) => r.status },
+        { h: 'Renews', r: (r) => fmt(r.renewal_date) }, { h: 'Status', r: (r) => <span style={{ fontWeight: 600, color: r.status === 'active' ? '#16a34a' : r.status === 'paused' ? '#d97706' : '#dc2626' }}>{r.status}</span> },
       ]} />
       {sel && (
         <div style={S.card}>
-          <h3>{sel.product_name}: seats</h3>
           <div style={S.row}>
+            <h3 style={{ margin: 0 }}>{sel.product_name}: seats</h3>
+            {isAdmin && sel.status !== 'cancelled' && (<>
+              <button style={S.btn} onClick={() => setEdit({ product_name: sel.product_name, plan: sel.plan ?? '', seats_total: sel.seats_total, cost_per_seat: sel.cost_per_seat, billing_cycle: sel.billing_cycle, renewal_date: fmt(sel.renewal_date), department_id: sel.department_id ?? '' })}>Edit</button>
+              {sel.status === 'active'
+                ? <button style={{ ...S.btn, background: '#d97706' }} onClick={() => act(() => patch(sel.subscription_id, { status: 'paused' }), 'Subscription paused')}>Pause</button>
+                : <button style={{ ...S.btn, background: '#16a34a' }} onClick={() => act(() => patch(sel.subscription_id, { status: 'active' }), 'Subscription resumed')}>Resume</button>}
+              <button style={{ ...S.btn, background: '#dc2626' }} onClick={() => { if (window.confirm(`Cancel ${sel.product_name}? Its ${sel.seats_used} active seats will be revoked. This cannot be undone.`)) act(() => patch(sel.subscription_id, { status: 'cancelled' }), 'Subscription cancelled and seats released'); }}>Cancel subscription</button>
+            </>)}
+            {sel.status !== 'active' && <b style={S.warn}>This subscription is {sel.status}; no new seats can be assigned.</b>}
+          </div>
+          {edit && (
+            <div style={S.card}>
+              <h3>Edit subscription</h3>
+              <div style={S.row}>
+                <input style={S.input} placeholder="Product" value={edit.product_name} onChange={setE('product_name')} />
+                <input style={S.input} placeholder="Plan" value={edit.plan} onChange={setE('plan')} />
+                <input style={S.input} type="number" min="1" placeholder="Seats" value={edit.seats_total} onChange={setE('seats_total')} />
+                <input style={S.input} type="number" min="0" step="0.01" placeholder="Cost/seat" value={edit.cost_per_seat} onChange={setE('cost_per_seat')} />
+                <select style={S.input} value={edit.billing_cycle} onChange={setE('billing_cycle')}><option>monthly</option><option>annual</option></select>
+                <input style={S.input} type="date" value={edit.renewal_date} onChange={setE('renewal_date')} />
+                <select style={S.input} value={edit.department_id} onChange={setE('department_id')}>
+                  <option value="">Unassigned</option>{lookup.departments.map((d) => <option key={d.department_id} value={d.department_id}>{d.name}</option>)}
+                </select>
+                <button style={S.btn} onClick={() => act(async () => { await patch(sel.subscription_id, edit); setEdit(null); }, 'Subscription updated')}>Save</button>
+                <button style={{ ...S.btn, background: '#6b7280' }} onClick={() => setEdit(null)}>Close</button>
+              </div>
+            </div>
+          )}
+          {sel.status === 'active' && (<div style={S.row}>
             <select style={S.input} value={emp} onChange={(e) => setEmp(e.target.value)}>
               <option value="">Select employee</option>
               {lookup.employees.map((e) => <option key={e.employee_id} value={e.employee_id}>{e.full_name}</option>)}
             </select>
             <button style={S.btn} disabled={!emp} onClick={() => act(() => api('/api/software/seats', { method: 'POST', body: JSON.stringify({ subscription_id: sel.subscription_id, employee_id: Number(emp) }) }), 'Seat assigned')}>Assign seat</button>
-          </div>
+          </div>)}
           <Table rows={seats} empty="No active seats" cols={[
             { h: 'Employee', r: (s) => s.full_name }, { h: 'Assigned', r: (s) => fmt(s.assigned_at) },
             { h: '', r: (s) => <button style={S.btn} onClick={() => act(() => api(`/api/software/seats?id=${s.seat_assignment_id}`, { method: 'DELETE' }), 'Seat revoked')}>Revoke</button> },
@@ -115,7 +146,7 @@ function Subscriptions({ notify, isAdmin }) {
         <h3>Add subscription</h3>
         <div style={S.row}>
           <select style={S.input} value={sub.vendor_id} onChange={set('vendor_id')}><option value="">Vendor</option>{lookup.vendors.map((v) => <option key={v.vendor_id} value={v.vendor_id}>{v.name}</option>)}</select>
-          <select style={S.input} value={sub.department_id} onChange={set('department_id')}><option value="">Department</option>{lookup.departments.map((d) => <option key={d.department_id} value={d.department_id}>{d.name}</option>)}</select>
+          <select style={S.input} value={sub.department_id} onChange={set('department_id')}><option value="">Department (optional)</option>{lookup.departments.map((d) => <option key={d.department_id} value={d.department_id}>{d.name}</option>)}</select>
           <input style={S.input} placeholder="Product" value={sub.product_name} onChange={set('product_name')} />
           <input style={S.input} placeholder="Plan" value={sub.plan} onChange={set('plan')} />
           <input style={S.input} type="number" min="0" step="0.01" placeholder="Cost/seat" value={sub.cost_per_seat} onChange={set('cost_per_seat')} />
@@ -162,24 +193,41 @@ function Renewals({ notify, isAdmin }) {
   const [d, setD] = useState({ upcoming: [], history: [] });
   const load = useCallback(() => api(`/api/software/renewals?days=${days}`).then(setD).catch((e) => notify(e.message, true)), [days, notify]);
   useEffect(() => { load(); }, [load]);
-  const renew = async (r) => {
-    const new_renewal_date = window.prompt('New renewal date (YYYY-MM-DD)', '');
-    if (!new_renewal_date) return;
-    const amount_paid = window.prompt('Amount paid', String(r.cost_per_cycle));
-    if (amount_paid === null) return;
-    try { await api('/api/software/renewals', { method: 'POST', body: JSON.stringify({ subscription_id: r.subscription_id, new_renewal_date, amount_paid }) }); notify('Renewal recorded'); load(); }
-    catch (e) { notify(e.message, true); }
+  const [form, setForm] = useState(null);
+  const addCycle = (d, cycle) => {
+    const [y, m, day] = String(d).slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1 + (cycle === 'annual' ? 12 : 1), day)).toISOString().slice(0, 10);
+  };
+  const startRenew = (r) => setForm({ subscription_id: r.subscription_id, product_name: r.product_name, current: fmt(r.renewal_date),
+    new_renewal_date: addCycle(r.renewal_date, r.billing_cycle), amount_paid: r.cost_per_cycle });
+  const renew = async () => {
+    try {
+      await api('/api/software/renewals', { method: 'POST', body: JSON.stringify({ subscription_id: form.subscription_id, new_renewal_date: form.new_renewal_date, amount_paid: form.amount_paid }) });
+      notify('Renewal recorded'); setForm(null); load();
+    } catch (e) { notify(e.message, true); }
   };
   return (
     <>
       <div style={S.row}>Renewing within
         <select style={S.input} value={days} onChange={(e) => setDays(Number(e.target.value))}>{[7, 30, 60, 90].map((n) => <option key={n} value={n}>{n} days</option>)}</select>
       </div>
+      {form && (
+        <div style={S.card}>
+          <h3>Record renewal: {form.product_name}</h3>
+          <div style={S.row}>
+            <span>Current renewal date: <b>{form.current}</b></span>
+            <label>New renewal date <input style={S.input} type="date" value={form.new_renewal_date} onChange={(e) => setForm({ ...form, new_renewal_date: e.target.value })} /></label>
+            <label>Amount paid <input style={S.input} type="number" min="0" step="0.01" value={form.amount_paid} onChange={(e) => setForm({ ...form, amount_paid: e.target.value })} /></label>
+            <button style={S.btn} onClick={renew}>Save renewal</button>
+            <button style={{ ...S.btn, background: '#6b7280' }} onClick={() => setForm(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
       <Table rows={d.upcoming} empty="Nothing renews in this window" cols={[
         { h: 'Product', r: (r) => r.product_name }, { h: 'Vendor', r: (r) => r.vendor_name },
         { h: 'Renews', r: (r) => fmt(r.renewal_date) }, { h: 'In', r: (r) => <span style={r.days_until <= 7 ? S.warn : undefined}>{r.days_until} days</span> },
         { h: 'Cycle cost', r: (r) => money(r.cost_per_cycle) }, { h: 'Unused seats', r: (r) => r.seats_unused },
-        ...(isAdmin ? [{ h: '', r: (r) => <button style={S.btn} onClick={() => renew(r)}>Record renewal</button> }] : []),
+        ...(isAdmin ? [{ h: '', r: (r) => <button style={S.btn} onClick={() => startRenew(r)}>Record renewal</button> }] : []),
       ]} />
       <h3>Recent renewals</h3>
       <Table rows={d.history} cols={[

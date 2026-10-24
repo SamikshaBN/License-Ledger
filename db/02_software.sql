@@ -81,13 +81,54 @@ BEGIN
   RETURN v_id;
 END $$;
 
+-- Edit a subscription. The seat limit can never drop below the seats already in use.
+CREATE OR REPLACE FUNCTION update_subscription(
+  p_id INTEGER, p_name TEXT, p_plan TEXT, p_seat_limit INTEGER, p_cost NUMERIC,
+  p_cycle TEXT, p_renewal DATE, p_department INTEGER)
+RETURNS VOID LANGUAGE plpgsql AS $$
+DECLARE v_status TEXT; v_used INTEGER;
+BEGIN
+  SELECT status INTO v_status FROM software_subscription WHERE subscription_id = p_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Subscription % not found', p_id; END IF;
+  IF v_status = 'cancelled' THEN RAISE EXCEPTION 'A cancelled subscription cannot be edited'; END IF;
+  SELECT count(*) INTO v_used FROM seat_assignment WHERE subscription_id = p_id AND revoked_at IS NULL;
+  IF p_seat_limit < v_used THEN
+    RAISE EXCEPTION 'Seat limit % is below the % seats already in use; revoke seats first', p_seat_limit, v_used;
+  END IF;
+  UPDATE software_subscription
+     SET name = p_name, plan = p_plan, seat_limit = p_seat_limit, cost_per_seat = p_cost,
+         billing_cycle = p_cycle, renewal_date = p_renewal, department_id = p_department
+   WHERE subscription_id = p_id;
+END $$;
+
+-- Pause, resume or cancel. Cancelling also frees every seat and cancels upcoming renewals, atomically.
+-- Returns the number of seats released.
+CREATE OR REPLACE FUNCTION set_subscription_status(p_id INTEGER, p_status TEXT)
+RETURNS INTEGER LANGUAGE plpgsql AS $$
+DECLARE v_old TEXT; v_released INTEGER := 0;
+BEGIN
+  IF p_status NOT IN ('active', 'paused', 'cancelled') THEN RAISE EXCEPTION 'Invalid status %', p_status; END IF;
+  SELECT status INTO v_old FROM software_subscription WHERE subscription_id = p_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Subscription % not found', p_id; END IF;
+  IF v_old = 'cancelled' THEN RAISE EXCEPTION 'A cancelled subscription cannot be changed'; END IF;
+  IF v_old = p_status THEN RAISE EXCEPTION 'Subscription is already %', p_status; END IF;
+  IF p_status = 'cancelled' THEN
+    WITH r AS (UPDATE seat_assignment SET revoked_at = now()
+                WHERE subscription_id = p_id AND revoked_at IS NULL RETURNING 1)
+    SELECT count(*) INTO v_released FROM r;
+    UPDATE renewal SET status = 'cancelled' WHERE subscription_id = p_id AND status = 'upcoming';
+  END IF;
+  UPDATE software_subscription SET status = p_status WHERE subscription_id = p_id;
+  RETURN v_released;
+END $$;
+
 -- ---------- Views (aliases keep the API/UI names: product_name, seats_total) ----------
 DROP VIEW IF EXISTS v_renewal_forecast;
 DROP VIEW IF EXISTS v_departed_seats;
 DROP VIEW IF EXISTS v_subscription_utilization;
 
 CREATE VIEW v_subscription_utilization AS
-SELECT s.subscription_id, s.name AS product_name, s.plan, v.name AS vendor_name, d.name AS department_name,
+SELECT s.subscription_id, s.name AS product_name, s.plan, v.name AS vendor_name, d.name AS department_name, s.department_id,
        s.seat_limit AS seats_total, count(sa.seat_id)::int AS seats_used,
        (s.seat_limit - count(sa.seat_id))::int AS seats_unused,
        s.cost_per_seat, s.billing_cycle, s.renewal_date, s.status,
