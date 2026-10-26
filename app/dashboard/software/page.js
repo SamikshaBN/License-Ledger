@@ -261,7 +261,17 @@ function Invoices({ notify, isAdmin }) {
   };
   useEffect(() => { load(); api('/api/software/subscriptions').then(setSubs).catch(() => {}); }, [load]);
   const max = Math.max(1, ...rows.map((r) => r.total));
-  const readFile = (file) => { if (!file) return; const rd = new FileReader(); rd.onload = () => { try { setF((p) => ({ ...p, raw_payload: JSON.parse(rd.result) })); } catch { notify('File is not valid JSON', true); } }; rd.readAsText(file); };
+  const readFile = (file) => {
+    if (!file) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      let parsed;
+      try { parsed = JSON.parse(rd.result); } // parse HERE: an error thrown inside setF's callback happens during rendering and crashes the page
+      catch { setF((p) => ({ ...p, raw_payload: null })); notify('That file is not valid JSON, so nothing was attached', true); return; }
+      setF((p) => ({ ...p, raw_payload: parsed }));
+    };
+    rd.readAsText(file);
+  };
   const submit = async () => {
     try { await api('/api/software/invoices', { method: 'POST', body: JSON.stringify({ ...f, subscription_id: Number(f.subscription_id) }) }); notify('Invoice stored in MongoDB'); load(); }
     catch (e) { notify(e.message, true); }

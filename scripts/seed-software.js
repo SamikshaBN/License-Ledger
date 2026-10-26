@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { MongoClient } from 'mongodb';
+import { invoices } from '../lib/software/mongo.js';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const q = (t, p) => pool.query(t, p);
@@ -46,8 +46,7 @@ for (const [i, [vname, product, plan, cost, cycle, seats, days]] of subs.entries
 }
 
 // Invoices in MongoDB: 6 months each, last month of the first vendor is an obvious spike.
-const mongo = await new MongoClient(process.env.MONGODB_URI).connect();
-const col = mongo.db(process.env.MONGODB_DB || 'licenseledger').collection('invoices');
+const col = await invoices(); // creates the collection with its validator and indexes if needed
 await col.deleteMany({ source: 'seed' });
 const docs = [];
 for (const [idx, s] of created.entries()) {
@@ -71,5 +70,5 @@ for (const [idx, s] of created.entries()) {
 }
 await col.insertMany(docs);
 console.log(`Seeded ${created.length} subscriptions and ${docs.length} invoices`);
-await mongo.close();
 await pool.end();
+process.exit(0); // the shared Mongo client would otherwise keep the process alive
