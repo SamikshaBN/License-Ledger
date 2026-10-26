@@ -19,7 +19,7 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
   // Employees only get their own page (API routes enforce roles again inside withAuth)
-  if (!isApi && payload.role === 'employee' && !pathname.startsWith('/dashboard/my')) {
+    if (!isApi && payload.role === 'employee' && !pathname.startsWith('/dashboard/my')) {
     return NextResponse.redirect(new URL('/dashboard/my', req.url));
   }
   if (!isApi && ADMIN_PAGES.some((p) => pathname.startsWith(p)) && payload.role !== 'admin') {

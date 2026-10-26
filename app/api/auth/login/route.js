@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { handle, readJson } from '@/lib/api';
-import { query } from '@/lib/db';
+import { ownerQuery as query } from '@/lib/db'; // nobody is logged in yet, so no role to switch to
 import { COOKIE, TOKEN_TTL_SECONDS, signToken } from '@/lib/auth';
 import { ApiError } from '@/lib/errors';
 import { validate } from '@/lib/validate';

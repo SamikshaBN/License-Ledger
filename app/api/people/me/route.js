@@ -8,8 +8,9 @@ export const GET = withAuth(null, async (_req, _ctx, user) => {
        FROM employee e LEFT JOIN department d ON d.department_id = e.department_id
       WHERE e.employee_id = $1`, [id])).rows[0];
   const assets = (await query(
-    `SELECT asset_id, asset_tag, type, make_model, serial_number, assigned_at
-       FROM v_hardware_inventory WHERE employee_id = $1 ORDER BY asset_tag`, [id])).rows;
+    `SELECT h.asset_id, h.asset_tag, h.type, h.make_model, h.serial_number, a.assigned_at
+       FROM asset_assignment a JOIN hardware_asset h ON h.asset_id = a.asset_id
+      WHERE a.employee_id = $1 AND a.returned_at IS NULL ORDER BY h.asset_tag`, [id])).rows;
   const seats = (await query(
     `SELECT s.seat_id, sub.name AS subscription, s.assigned_at
        FROM seat_assignment s JOIN software_subscription sub ON sub.subscription_id = s.subscription_id

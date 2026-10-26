@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node --env-file=.env scripts/apply-roles.js",
     "dev": "next dev",
+    "db:roles": "node --env-file=.env scripts/apply-roles.js",
+    "test:access": "node --env-file=.env --test tests/access.test.js",
     "build": "next build",
     "start": "next start",
     "db:seed": "node --env-file=.env scripts/seed.js",
