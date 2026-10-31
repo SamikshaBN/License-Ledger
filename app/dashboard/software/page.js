@@ -62,6 +62,7 @@ function Subscriptions({ notify, isAdmin }) {
   const [seats, setSeats] = useState([]);
   const [emp, setEmp] = useState('');
   const [vendor, setVendor] = useState({ name: '', website: '', contact_email: '' });
+  const [vEdit, setVEdit] = useState(null);
   const blank = { vendor_id: '', department_id: '', product_name: '', plan: '', cost_per_seat: '', billing_cycle: 'monthly', seats_total: '', renewal_date: '' };
   const [sub, setSub] = useState(blank);
   const [edit, setEdit] = useState(null);
@@ -155,6 +156,21 @@ function Subscriptions({ notify, isAdmin }) {
           <input style={S.input} type="date" value={sub.renewal_date} onChange={set('renewal_date')} />
           <button style={S.btn} onClick={() => act(async () => { await api('/api/software/subscriptions', { method: 'POST', body: JSON.stringify(sub) }); setSub(blank); }, 'Subscription added')}>Add</button>
         </div>
+      </div>
+            <div style={S.card}>
+        <h3>Vendors</h3>
+        <Table rows={lookup.vendors} empty="No vendors" cols={[
+          { h: 'Name', r: (v) => v.name }, { h: 'Website', r: (v) => v.website ?? '-' },
+          { h: 'Contact email', r: (v) => v.contact_email ?? '-' },
+          { h: '', r: (v) => <button style={S.btn} onClick={() => setVEdit({ vendor_id: v.vendor_id, name: v.name, website: v.website ?? '', contact_email: v.contact_email ?? '' })}>Edit</button> },
+        ]} />
+        {vEdit && (
+          <div style={{ ...S.row, marginTop: 12 }}>
+            {['name', 'website', 'contact_email'].map((k) => <input key={k} style={S.input} placeholder={k} value={vEdit[k]} onChange={(e) => setVEdit({ ...vEdit, [k]: e.target.value })} />)}
+            <button style={S.btn} onClick={() => act(async () => { await api(`/api/software/vendors/${vEdit.vendor_id}`, { method: 'PATCH', body: JSON.stringify({ name: vEdit.name, website: vEdit.website, contact_email: vEdit.contact_email }) }); setVEdit(null); loadLookup(); }, 'Vendor updated')}>Save</button>
+            <button style={{ ...S.btn, background: '#6b7280' }} onClick={() => setVEdit(null)}>Close</button>
+          </div>
+        )}
       </div>
       </>)}
     </>
